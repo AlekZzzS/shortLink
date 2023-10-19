@@ -2,4 +2,4 @@
 - npm start
 - ui on /ui
 - post /shorten
-- get /alias or link
+- get /alias or url
