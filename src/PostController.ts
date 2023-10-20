@@ -1,6 +1,6 @@
 import shortid from 'shortid';
 import { Request, Response } from 'express';
-import { storageUrl } from './index';
+import { UrlDocument, UrlModel } from './models/UrlModel';
 
 class PostController {
     async create(req: Request, res: Response) {
@@ -12,34 +12,31 @@ class PostController {
                 return res.status(400).json({ error: 'Invalid URL' });
             }
 
-            let alias = customAlias;
-            if (!alias) {
-                alias = shortid.generate();
-            } else {
-                if (storageUrl[alias]) {
-                    return res.status(400).json({ error: 'Alias already in use' });
-                }
-            }
+            let alias = customAlias || shortid.generate();
 
-            storageUrl[alias] = fullUrl;
-            res.json({ alias, fullUrl });
+            const url: UrlDocument = await UrlModel.create({ alias, fullUrl });
+            res.json({ alias: url.alias, fullUrl: url.fullUrl });
         } catch (error: any) {
-            return res.status(400).json({ error: error.message });
+            if (error.code === 11000) {
+                return res.status(400).json({ error: 'Alias already in use' });
+            }
+            return res.status(500).json({ error: 'Internal Server Error' });
         }
     }
 
     async redirect(req: Request, res: Response) {
+        const alias = req.params.alias;
         try {
-            const { alias } = req.params;
-            const fullUrl = storageUrl[alias];
+          const url = await UrlModel.findOne({ alias });
 
-            if (fullUrl) {
-                res.redirect(fullUrl);
-            } else {
-                res.status(404).json({ error: 'URL not found' });
-            }
-        } catch (error: any) {
-            return res.status(400).json({ error: error.message });
+          if (url) {
+            res.redirect(url.fullUrl);
+          } else {
+            res.status(404).send('URL not found');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          res.status(500).send('Internal Server Error');
         }
     }
 }
