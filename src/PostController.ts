@@ -27,13 +27,13 @@ class PostController {
     async redirect(req: Request, res: Response) {
         const alias = req.params.alias;
         try {
-          const url = await UrlModel.findOne({ alias });
+            const url = await UrlModel.findOne({ alias });
 
-          if (url) {
-            res.redirect(url.fullUrl);
-          } else {
-            res.status(404).send('URL not found');
-          }
+            if (url) {
+                res.redirect(url.fullUrl);
+            } else {
+                res.status(404).send('URL not found');
+            }
         } catch (error) {
           console.error('Error:', error);
           res.status(500).send('Internal Server Error');
